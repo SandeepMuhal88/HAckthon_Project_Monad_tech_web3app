@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  # Backend API Service
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: poc_backend
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+    environment:
+      # Blockchain Configuration
+      - MONAD_RPC_URL=${MONAD_RPC_URL:-https://testnet-rpc.monad.xyz/}
+      - CHAIN_ID=${CHAIN_ID:-1}
+      - VERIFIER_PRIVATE_KEY=${VERIFIER_PRIVATE_KEY}
+      - VERIFIER_ADDRESS=${VERIFIER_ADDRESS}
+      - CULTURE_PROOF_ADDRESS=${CULTURE_PROOF_ADDRESS:-0x0000000000000000000000000000000000000000}
+
+      # Database Configuration
+      - DATABASE_URL=sqlite:///app/data/proof_of_culture.db
+
+      # API Configuration
+      - API_PORT=8000
+      - API_HOST=0.0.0.0
+
+      # QR Configuration
+      - QR_EXPIRY_SECONDS=${QR_EXPIRY_SECONDS:-300}
+    volumes:
+      - backend_data:/app/data
+      - ./backend/logs:/app/logs
+    networks:
+      - poc_network
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8000/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Flutter Frontend (builds automatically)
+  frontend:
+    build:
+      context: ./frontend/poc_engine
+      dockerfile: Dockerfile
+    container_name: poc_frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80"
+    networks:
+      - poc_network
+    depends_on:
+      - backend
+
+  # Nginx Reverse Proxy (for production - optional)
+  nginx:
+    image: nginx:alpine
+    container_name: poc_nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./nginx/ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - poc_network
+    healthcheck:
+      test: [ "CMD", "wget", "-q", "--spider", "http://localhost/health" ]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    profiles:
+      - production # Only run this in production mode
+
+volumes:
+  backend_data:
+    driver: local
+
+networks:
+  poc_network:
+    driver: bridge

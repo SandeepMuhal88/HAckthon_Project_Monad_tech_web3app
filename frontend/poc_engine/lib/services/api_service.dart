@@ -1,8 +1,9 @@
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import '../core/api_config.dart';
 
 class ApiService {
-  static const String baseUrl = 'http://localhost:8000/api';
+  static String get baseUrl => ApiConfig.baseUrl;
   
   // Get all events
   static Future<dynamic> getEvents() async {
