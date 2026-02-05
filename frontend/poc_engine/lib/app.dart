@@ -30,11 +30,11 @@ class CryptoApp extends StatelessWidget {
         textTheme: GoogleFonts.interTextTheme(
           ThemeData.dark().textTheme,
         ),
-        cardTheme: CardTheme(
-          color: const Color(0xFF1A1F3A),
+        cardTheme: const CardThemeData(
+          color: Color(0xFF1A1F3A),
           elevation: 0,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.all(Radius.circular(16)),
           ),
         ),
         appBarTheme: const AppBarTheme(

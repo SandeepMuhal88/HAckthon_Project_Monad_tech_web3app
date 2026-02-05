@@ -1,7 +1,9 @@
+import 'dart:math';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:web3dart/web3dart.dart';
 import 'package:http/http.dart' as http;
+import 'package:convert/convert.dart';
 
 class WalletService extends ChangeNotifier {
   final _storage = const FlutterSecureStorage();
@@ -57,13 +59,14 @@ class WalletService extends ChangeNotifier {
     
     try {
       // Generate new random private key
-      _privateKey = EthPrivateKey.createRandom(Random.secure());
+      final random = Random.secure();
+      _privateKey = EthPrivateKey.createRandom(random);
       _address = _privateKey!.address;
       
       // Save to secure storage
       await _storage.write(
         key: 'wallet_private_key',
-        value: _privateKey!.privateKey.toHex(),
+        value: hex.encode(_privateKey!.privateKey),
       );
       
       await refreshBalance();
